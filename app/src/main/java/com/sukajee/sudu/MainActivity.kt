@@ -15,18 +15,20 @@ import com.sukajee.sudu.data.model.Sudu
 import com.sukajee.sudu.ui.MainScreen
 import com.sukajee.sudu.ui.SuduViewModel
 import com.sukajee.sudu.ui.theme.SuduTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val viewModel: SuduViewModel by viewModels()
             SuduTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
+                    val viewModel: SuduViewModel by viewModels()
                     MainScreen(viewModel)
                 }
             }

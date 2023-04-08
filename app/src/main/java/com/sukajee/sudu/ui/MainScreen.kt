@@ -8,5 +8,12 @@ fun MainScreen(
     viewModel: SuduViewModel,
     modifier: Modifier = Modifier
 ) {
+    StatelessMainScreen(modifier = modifier)
+}
+
+@Composable
+fun StatelessMainScreen(
+    modifier: Modifier = Modifier
+) {
 
 }
