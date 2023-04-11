@@ -1,11 +1,13 @@
 package com.sukajee.sudu.ui
 
-import android.util.Log
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sukajee.sudu.data.model.BottomSheetUiState
 import com.sukajee.sudu.data.model.Sudu
-import com.sukajee.sudu.data.model.UiState
+import com.sukajee.sudu.data.model.MainUiState
 import com.sukajee.sudu.data.repository.SuduRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,9 +23,13 @@ class SuduViewModel @Inject constructor(
     private val repository: SuduRepository
 ) : ViewModel() {
 
-    private val _homeUiState = MutableStateFlow(UiState())
-    val homeUiState
-        get() = _homeUiState.asStateFlow()
+    private val _mainUiState = MutableStateFlow(MainUiState())
+    val mainUiState
+        get() = _mainUiState.asStateFlow()
+
+    private val _bottomSheetUiState = MutableStateFlow(BottomSheetUiState())
+    val bottomSheetUiState
+        get() = _bottomSheetUiState.asStateFlow()
 
     init {
         fetchSudus()
@@ -31,11 +37,12 @@ class SuduViewModel @Inject constructor(
 
     fun insertSudu(sudu: Sudu) = viewModelScope.launch {
         repository.insertSudu(sudu)
+        fetchSudus()
     }
 
     private fun fetchSudus() = viewModelScope.launch {
         repository.getAllSudus().let { sudus ->
-            _homeUiState.update { currentState ->
+            _mainUiState.update { currentState ->
                 currentState.copy(
                     sudus = sudus
                 )
@@ -49,9 +56,11 @@ class SuduViewModel @Inject constructor(
 
     fun deleteSudu(sudu: Sudu) = viewModelScope.launch {
         repository.deleteSudu(sudu)
+        fetchSudus()
     }
 
     fun deleteCompletedSudus() = viewModelScope.launch {
         repository.deleteCompletedSudus()
+        fetchSudus()
     }
 }

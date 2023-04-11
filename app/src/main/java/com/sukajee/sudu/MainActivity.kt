@@ -7,12 +7,8 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.sukajee.sudu.data.model.Sudu
-import com.sukajee.sudu.ui.MainScreen
+import com.sukajee.sudu.ui.screens.MainScreen
 import com.sukajee.sudu.ui.SuduViewModel
 import com.sukajee.sudu.ui.theme.SuduTheme
 import dagger.hilt.android.AndroidEntryPoint

@@ -1,6 +1,5 @@
 package com.sukajee.sudu.data.model
 
-import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -12,5 +11,6 @@ data class Sudu(
     val description: String?,
     val isCompleted: Boolean? = false,
     val deadline: Long? = -1L,
-    val created: Long?
+    val created: Long?,
+    val lastModified: Long?
 )

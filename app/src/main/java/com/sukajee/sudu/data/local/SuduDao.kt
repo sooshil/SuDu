@@ -1,9 +1,6 @@
 package com.sukajee.sudu.data.local
 
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.Query
+import androidx.room.*
 import com.sukajee.sudu.data.model.Sudu
 
 @Dao
@@ -15,7 +12,7 @@ interface SuduDao {
     @Query("SELECT * FROM sudus WHERE id = :suduId")
     suspend fun getSudu(suduId: Int): Sudu
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSudu(sudu: Sudu)
 
     @Delete
