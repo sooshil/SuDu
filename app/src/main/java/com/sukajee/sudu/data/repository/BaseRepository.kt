@@ -8,5 +8,6 @@ interface BaseRepository {
     suspend fun getSudu(suduId: Int): Sudu
     suspend fun getAllSudus(): List<Sudu>
     suspend fun deleteSudu(sudu: Sudu)
+    suspend fun updateSudu(sudu: Sudu)
     suspend fun deleteCompletedSudus()
 }

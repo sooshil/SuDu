@@ -1,6 +1,8 @@
 package com.sukajee.sudu.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -12,10 +14,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sukajee.sudu.data.model.BottomSheetUiState
 import com.sukajee.sudu.data.model.MainUiState
 import com.sukajee.sudu.data.model.Sudu
 import com.sukajee.sudu.ui.SuduViewModel
+import com.sukajee.sudu.ui.compsables.SuduItem
 import kotlinx.coroutines.launch
 
 @Composable
@@ -25,7 +27,9 @@ fun MainScreen(
     val uiState by viewModel.mainUiState.collectAsState()
     StatelessMainScreen(
         mainUiState = uiState,
-        onSubmitClicked = { viewModel.insertSudu(it) }
+        onSubmitClicked = { viewModel.insertSudu(it) },
+        onCompletedUpdate = { viewModel.updateSudu(it) },
+        onUpdateClicked = { viewModel.updateSudu(it) }
     )
 }
 
@@ -33,24 +37,39 @@ fun MainScreen(
 @Composable
 fun StatelessMainScreen(
     mainUiState: MainUiState,
-    onSubmitClicked: (Sudu) -> Unit
+    onSubmitClicked: (Sudu) -> Unit,
+    onCompletedUpdate: (Sudu) -> Unit,
+    onUpdateClicked: (Sudu) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val bottomsheetState = rememberModalBottomSheetState(
         initialValue = ModalBottomSheetValue.Hidden
     )
+    var currentSuduForBottomSheet by remember {
+        mutableStateOf<Sudu?>(null)
+    }
     ModalBottomSheetLayout(
         sheetState = bottomsheetState,
         sheetContent = {
             AddSuduBottomSheet(
+                editingSudu = currentSuduForBottomSheet,
                 onSubmitClick = {
                     onSubmitClicked(it)
                     scope.launch {
+                        currentSuduForBottomSheet = null
                         bottomsheetState.hide()
                     }
                 },
                 onCancelled = {
                     scope.launch {
+                        currentSuduForBottomSheet = null
+                        bottomsheetState.hide()
+                    }
+                },
+                onUpdateClicked = {
+                    onUpdateClicked(it)
+                    scope.launch {
+                        currentSuduForBottomSheet = null
                         bottomsheetState.hide()
                     }
                 }
@@ -83,9 +102,25 @@ fun StatelessMainScreen(
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                mainUiState.sudus.let {
-                    if (it.isNotEmpty()) Text(text = "${it.last().title}")
-                    else Text(text = "List is empty now.")
+                mainUiState.sudus.let { sudus ->
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(8.dp)
+                    ) {
+                        items(sudus.size) { index ->
+                            SuduItem(
+                                sudu = sudus[index],
+                                onCheckedChange = { onCompletedUpdate(it) },
+                                onSuduClick = {
+                                    Log.d("TAG", "Sudu Id when just clicked on lazyItem: ${it.id}")
+                                    currentSuduForBottomSheet = it
+                                    scope.launch {
+                                        bottomsheetState.show()
+                                    }
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }

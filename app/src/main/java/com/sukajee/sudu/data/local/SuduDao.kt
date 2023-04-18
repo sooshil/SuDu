@@ -18,6 +18,9 @@ interface SuduDao {
     @Delete
     suspend fun deleteSudu(sudu: Sudu)
 
+    @Update(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun updateSudu(sudu: Sudu)
+
     @Query("DELETE FROM sudus WHERE isCompleted = true")
     suspend fun deleteCompleted()
 }

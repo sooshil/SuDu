@@ -9,7 +9,7 @@ data class Sudu(
     val id: Int = 0,
     val title: String?,
     val description: String?,
-    val isCompleted: Boolean? = false,
+    var isCompleted: Boolean? = false,
     val deadline: Long? = -1L,
     val created: Long?,
     val lastModified: Long?

@@ -1,5 +1,6 @@
 package com.sukajee.sudu.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
@@ -20,25 +21,25 @@ import com.sukajee.sudu.ui.compsables.SuduTextField
 fun AddSuduBottomSheet(
     modifier: Modifier = Modifier,
     onSubmitClick: (Sudu) -> Unit,
+    onUpdateClicked: (Sudu) -> Unit,
     onCancelled: () -> Unit,
-    isInEditMode: Boolean = false,
     editingSudu: Sudu? = null
 ) {
-    var titleState by remember {
-        mutableStateOf(if (isInEditMode) editingSudu?.title ?: "" else "")
-    }
-    var descriptionState by remember {
-        mutableStateOf(if (isInEditMode) editingSudu?.description ?: "" else "")
-    }
-    var completedState by remember {
-        mutableStateOf(if (isInEditMode) editingSudu?.isCompleted ?: false else false)
-    }
-    var deadlineState by remember {
-        mutableStateOf(
-            if (isInEditMode) editingSudu?.deadline
-                ?: System.currentTimeMillis()
-            else -1L
-        )
+    var suduId by remember { mutableStateOf(editingSudu?.id ?: 0) }
+    var titleState by remember { mutableStateOf(editingSudu?.title ?: "") }
+    var descriptionState by remember { mutableStateOf(editingSudu?.description ?: "") }
+    var completedState by remember { mutableStateOf(editingSudu?.isCompleted ?: false) }
+    var deadlineState by remember { mutableStateOf(editingSudu?.deadline?.toString() ?: "") }
+
+    if (editingSudu != null) {
+        // Update mutable state variables with values from editingSudu
+        LaunchedEffect(editingSudu) {
+            suduId = editingSudu.id
+            titleState = editingSudu.title.toString()
+            descriptionState = editingSudu.description.toString()
+            completedState = editingSudu.isCompleted == true
+            deadlineState = editingSudu.deadline.toString()
+        }
     }
 
     Box(modifier = modifier.padding(16.dp)) {
@@ -65,7 +66,7 @@ fun AddSuduBottomSheet(
                 label = "Description"
             )
             Spacer(modifier = Modifier.height(8.dp))
-            if (isInEditMode) {
+            editingSudu?.let {
                 Row(
                     modifier = modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -82,16 +83,12 @@ fun AddSuduBottomSheet(
                         }
                     )
                 }
+                Spacer(modifier = Modifier.height(16.dp))
             }
-            if (isInEditMode) Spacer(modifier = Modifier.height(16.dp))
             SuduTextField(
-                value = if (deadlineState != -1L) deadlineState.toString() else "",
+                value = deadlineState,
                 onValueChange = {
-                    deadlineState = try {
-                        it.toLong()
-                    } catch (e: Exception) {
-                        -1
-                    }
+                    deadlineState = it
                 },
                 label = "Deadline",
                 endIcon = Icons.Default.Menu
@@ -106,30 +103,33 @@ fun AddSuduBottomSheet(
                         titleState = ""
                         descriptionState = ""
                         completedState = false
-                        deadlineState = -1L
-                        if (isInEditMode) onCancelled()
+                        deadlineState = ""
+                        editingSudu?.let { onCancelled() }
                     }
                 ) {
-                    Text(text = if (isInEditMode) "Cancel" else "Clear")
+                    Text(text = editingSudu?.let { "Cancel" } ?: "Clear")
                 }
                 Button(
                     modifier = modifier
                         .weight(1f)
                         .padding(start = 8.dp),
                     onClick = {
-                        onSubmitClick(
-                            Sudu(
-                                title = titleState,
-                                description = descriptionState,
-                                isCompleted = completedState,
-                                deadline = deadlineState,
-                                created = System.currentTimeMillis(),
-                                lastModified = System.currentTimeMillis()
-                            )
+                        val sudu = Sudu(
+                            id = suduId,
+                            title = titleState,
+                            description = descriptionState,
+                            isCompleted = completedState,
+                            deadline = deadlineState.toLongOrNull() ?: -1L,
+                            created = System.currentTimeMillis(),
+                            lastModified = System.currentTimeMillis()
                         )
+                        editingSudu?.let {
+                            onUpdateClicked(sudu)
+                        }
+                        onSubmitClick(sudu)
                     }
                 ) {
-                    Text(text = if (isInEditMode) "Update" else "Submit")
+                    Text(text = editingSudu?.let { "Update" } ?: "Submit")
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))

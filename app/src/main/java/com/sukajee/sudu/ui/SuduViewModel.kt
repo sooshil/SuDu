@@ -59,6 +59,11 @@ class SuduViewModel @Inject constructor(
         fetchSudus()
     }
 
+    fun updateSudu(sudu: Sudu) = viewModelScope.launch {
+        repository.updateSudu(sudu)
+        fetchSudus()
+    }
+
     fun deleteCompletedSudus() = viewModelScope.launch {
         repository.deleteCompletedSudus()
         fetchSudus()

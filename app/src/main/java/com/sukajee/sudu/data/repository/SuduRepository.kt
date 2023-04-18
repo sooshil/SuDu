@@ -12,5 +12,6 @@ class SuduRepository @Inject constructor(
     override suspend fun getSudu(suduId: Int): Sudu = dao.getSudu(suduId)
     override suspend fun getAllSudus(): List<Sudu> = dao.getAllSudus()
     override suspend fun deleteSudu(sudu: Sudu) = dao.deleteSudu(sudu)
+    override suspend fun updateSudu(sudu: Sudu) = dao.updateSudu(sudu)
     override suspend fun deleteCompletedSudus() = dao.deleteCompleted()
 }
