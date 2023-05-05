@@ -1,15 +1,16 @@
 package com.sukajee.sudu.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sukajee.sudu.data.model.BottomSheetUiState
-import com.sukajee.sudu.data.model.Sudu
 import com.sukajee.sudu.data.model.MainUiState
+import com.sukajee.sudu.data.model.Sudu
 import com.sukajee.sudu.data.repository.SuduRepository
+import com.sukajee.sudu.data.util.OrderType
+import com.sukajee.sudu.data.util.SuduOrder
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -24,48 +25,84 @@ class SuduViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _mainUiState = MutableStateFlow(MainUiState())
-    val mainUiState
-        get() = _mainUiState.asStateFlow()
+    val mainUiState = _mainUiState.asStateFlow()
 
     private val _bottomSheetUiState = MutableStateFlow(BottomSheetUiState())
-    val bottomSheetUiState
-        get() = _bottomSheetUiState.asStateFlow()
+    val bottomSheetUiState = _bottomSheetUiState.asStateFlow()
 
     init {
-        fetchSudus()
+        fetchSudus(suduOrder = SuduOrder.CreatedDate(OrderType.Descending))
     }
 
     fun insertSudu(sudu: Sudu) = viewModelScope.launch {
         repository.insertSudu(sudu)
-        fetchSudus()
+        updateBottomSheetUiState(null)
     }
 
-    private fun fetchSudus() = viewModelScope.launch {
-        repository.getAllSudus().let { sudus ->
+    private fun fetchSudus(
+        suduOrder: SuduOrder
+    ) = viewModelScope.launch {
+
+        _mainUiState.update { currentState ->
+            currentState.copy(
+                loading = true
+            )
+        }
+        repository.getAllSudus().collect { sudus ->
+            val sortedSudu = when (suduOrder.orderType) {
+                is OrderType.Ascending -> {
+                    when (suduOrder) {
+                        is SuduOrder.Title -> sudus.sortedBy { it.title.lowercase() }
+                        is SuduOrder.CreatedDate -> sudus.sortedBy { it.created }
+                        is SuduOrder.Color -> sudus.sortedBy { it.color }
+                    }
+                }
+
+                is OrderType.Descending -> {
+                    when (suduOrder) {
+                        is SuduOrder.Title -> sudus.sortedByDescending { it.title.lowercase() }
+                        is SuduOrder.CreatedDate -> sudus.sortedByDescending { it.created }
+                        is SuduOrder.Color -> sudus.sortedByDescending { it.color }
+                    }
+                }
+            }
             _mainUiState.update { currentState ->
                 currentState.copy(
-                    sudus = sudus
+                    sudus = sortedSudu,
+                    loading = false
                 )
             }
         }
     }
 
-    fun getSudu(suduId: Int) = viewModelScope.launch {
-        repository.getSudu(suduId)
-    }
+    private suspend fun getSudu(suduId: Int): Sudu = repository.getSudu(suduId)
 
     fun deleteSudu(sudu: Sudu) = viewModelScope.launch {
         repository.deleteSudu(sudu)
-        fetchSudus()
     }
 
     fun updateSudu(sudu: Sudu) = viewModelScope.launch {
         repository.updateSudu(sudu)
-        fetchSudus()
+        updateBottomSheetUiState(null)
+    }
+
+    fun updateBottomSheetUiState(currentSudu: Sudu?, isEditMode: Boolean = false) {
+        _bottomSheetUiState.update { currentState ->
+            currentState.copy(
+                isEditMode = isEditMode,
+                currentSudu = currentSudu
+            )
+        }
     }
 
     fun deleteCompletedSudus() = viewModelScope.launch {
         repository.deleteCompletedSudus()
-        fetchSudus()
+    }
+
+    suspend fun onSuduClick(suduId: Int) {
+        updateBottomSheetUiState(
+            isEditMode = true,
+            currentSudu = getSudu(suduId = suduId)
+        )
     }
 }

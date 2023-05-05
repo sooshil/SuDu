@@ -1,6 +1,5 @@
 package com.sukajee.sudu.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
@@ -14,32 +13,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sukajee.sudu.data.model.BottomSheetUiState
 import com.sukajee.sudu.data.model.Sudu
 import com.sukajee.sudu.ui.compsables.SuduTextField
 
 @Composable
 fun AddSuduBottomSheet(
+    uiState: BottomSheetUiState,
     modifier: Modifier = Modifier,
     onSubmitClick: (Sudu) -> Unit,
     onUpdateClicked: (Sudu) -> Unit,
-    onCancelled: () -> Unit,
-    editingSudu: Sudu? = null
+    onCancelled: () -> Unit
 ) {
-    var suduId by remember { mutableStateOf(editingSudu?.id ?: 0) }
-    var titleState by remember { mutableStateOf(editingSudu?.title ?: "") }
-    var descriptionState by remember { mutableStateOf(editingSudu?.description ?: "") }
-    var completedState by remember { mutableStateOf(editingSudu?.isCompleted ?: false) }
-    var deadlineState by remember { mutableStateOf(editingSudu?.deadline?.toString() ?: "") }
+    var suduId by remember { mutableStateOf(0) }
+    var titleState by remember { mutableStateOf("") }
+    val colorState by remember { mutableStateOf(0) }
+    var descriptionState by remember { mutableStateOf("") }
+    var completedState by remember { mutableStateOf(false) }
+    var deadlineState by remember { mutableStateOf("") }
 
-    if (editingSudu != null) {
-        // Update mutable state variables with values from editingSudu
-        LaunchedEffect(editingSudu) {
-            suduId = editingSudu.id
-            titleState = editingSudu.title.toString()
-            descriptionState = editingSudu.description.toString()
-            completedState = editingSudu.isCompleted == true
-            deadlineState = editingSudu.deadline.toString()
-        }
+
+    LaunchedEffect(uiState.currentSudu) {
+        suduId = uiState.currentSudu?.id ?: 0
+        titleState = uiState.currentSudu?.title ?: ""
+        descriptionState = uiState.currentSudu?.description.toString()
+        completedState = uiState.currentSudu?.isCompleted == true
+        deadlineState = uiState.currentSudu?.deadline.toString()
     }
 
     Box(modifier = modifier.padding(16.dp)) {
@@ -63,10 +62,11 @@ fun AddSuduBottomSheet(
                 onValueChange = {
                     descriptionState = it
                 },
+                maxLines = 5,
                 label = "Description"
             )
             Spacer(modifier = Modifier.height(8.dp))
-            editingSudu?.let {
+            uiState.currentSudu?.let {
                 Row(
                     modifier = modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -104,10 +104,10 @@ fun AddSuduBottomSheet(
                         descriptionState = ""
                         completedState = false
                         deadlineState = ""
-                        editingSudu?.let { onCancelled() }
+                        uiState.currentSudu?.let { onCancelled() }
                     }
                 ) {
-                    Text(text = editingSudu?.let { "Cancel" } ?: "Clear")
+                    Text(text = uiState.currentSudu?.let { "Cancel" } ?: "Clear")
                 }
                 Button(
                     modifier = modifier
@@ -117,19 +117,19 @@ fun AddSuduBottomSheet(
                         val sudu = Sudu(
                             id = suduId,
                             title = titleState,
+                            color = colorState,
                             description = descriptionState,
                             isCompleted = completedState,
                             deadline = deadlineState.toLongOrNull() ?: -1L,
                             created = System.currentTimeMillis(),
                             lastModified = System.currentTimeMillis()
                         )
-                        editingSudu?.let {
+                        uiState.currentSudu?.let {
                             onUpdateClicked(sudu)
-                        }
-                        onSubmitClick(sudu)
+                        } ?: onSubmitClick(sudu)
                     }
                 ) {
-                    Text(text = editingSudu?.let { "Update" } ?: "Submit")
+                    Text(text = uiState.currentSudu?.let { "Update" } ?: "Submit")
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))

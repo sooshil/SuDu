@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.ui.Modifier
-import com.sukajee.sudu.ui.screens.MainScreen
 import com.sukajee.sudu.ui.SuduViewModel
+import com.sukajee.sudu.ui.screens.MainScreen
 import com.sukajee.sudu.ui.theme.SuduTheme
 import dagger.hilt.android.AndroidEntryPoint
 

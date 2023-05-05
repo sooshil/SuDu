@@ -25,12 +25,13 @@ fun SuduItem(
     onSuduClick: (Sudu) -> Unit
 ) {
     var checkedState by remember {
-        mutableStateOf(sudu.isCompleted ?: false)
+        mutableStateOf(sudu.isCompleted)
     }
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = 4.dp,
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
+        backgroundColor = Color(sudu.color)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -43,7 +44,7 @@ fun SuduItem(
                         onSuduClick(sudu)
                     }
             ) {
-                sudu.title?.let {
+                sudu.title.let {
                     Text(
                         text = sudu.title,
                         color = Color.Black,
@@ -58,19 +59,17 @@ fun SuduItem(
                     )
                 }
             }
-            sudu.isCompleted?.let {
-                Checkbox(
-                    checked = checkedState,
-                    onCheckedChange = {
-                        checkedState = it
-                        onCheckedChange(
-                            sudu.copy(
-                                isCompleted = it
-                            )
+            Checkbox(
+                checked = checkedState,
+                onCheckedChange = {
+                    checkedState = !checkedState
+                    onCheckedChange(
+                        sudu.copy(
+                            isCompleted = checkedState
                         )
-                    }
-                )
-            }
+                    )
+                }
+            )
         }
     }
 

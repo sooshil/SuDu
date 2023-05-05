@@ -7,10 +7,11 @@ import androidx.room.PrimaryKey
 data class Sudu(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val title: String?,
+    val title: String,
     val description: String?,
-    var isCompleted: Boolean? = false,
+    val color: Int,
+    var isCompleted: Boolean = false,
     val deadline: Long? = -1L,
-    val created: Long?,
+    val created: Long,
     val lastModified: Long?
 )

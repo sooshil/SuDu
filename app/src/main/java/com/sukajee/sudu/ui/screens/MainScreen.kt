@@ -8,16 +8,20 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
+import com.sukajee.sudu.data.model.BottomSheetUiState
 import com.sukajee.sudu.data.model.MainUiState
 import com.sukajee.sudu.data.model.Sudu
 import com.sukajee.sudu.ui.SuduViewModel
 import com.sukajee.sudu.ui.compsables.SuduItem
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
@@ -25,11 +29,28 @@ fun MainScreen(
     viewModel: SuduViewModel
 ) {
     val uiState by viewModel.mainUiState.collectAsState()
+    val bottomSheetUiState by viewModel.bottomSheetUiState.collectAsState()
+
     StatelessMainScreen(
         mainUiState = uiState,
-        onSubmitClicked = { viewModel.insertSudu(it) },
-        onCompletedUpdate = { viewModel.updateSudu(it) },
-        onUpdateClicked = { viewModel.updateSudu(it) }
+        bottomSheetUiState = bottomSheetUiState,
+        onSubmitClicked = { sudu, isUpdate ->
+            if (isUpdate) viewModel.updateSudu(sudu) else viewModel.insertSudu(sudu)
+        },
+        onCompletedUpdate = { updatedSudu ->
+            viewModel.updateSudu(updatedSudu)
+        },
+        onSuduClick = { clickedSuduId ->
+            viewModel.viewModelScope.launch {
+                viewModel.onSuduClick(clickedSuduId)
+            }
+        },
+        onCancelClicked = {
+            viewModel.updateBottomSheetUiState(
+                currentSudu = null,
+                isEditMode = false
+            )
+        }
     )
 }
 
@@ -37,39 +58,36 @@ fun MainScreen(
 @Composable
 fun StatelessMainScreen(
     mainUiState: MainUiState,
-    onSubmitClicked: (Sudu) -> Unit,
+    bottomSheetUiState: BottomSheetUiState,
+    onSuduClick: (suduId: Int) -> Unit,
+    onSubmitClicked: (sudu: Sudu, isUpdate: Boolean) -> Unit,
     onCompletedUpdate: (Sudu) -> Unit,
-    onUpdateClicked: (Sudu) -> Unit
+    onCancelClicked: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val bottomsheetState = rememberModalBottomSheetState(
         initialValue = ModalBottomSheetValue.Hidden
     )
-    var currentSuduForBottomSheet by remember {
-        mutableStateOf<Sudu?>(null)
-    }
     ModalBottomSheetLayout(
         sheetState = bottomsheetState,
         sheetContent = {
             AddSuduBottomSheet(
-                editingSudu = currentSuduForBottomSheet,
+                uiState = bottomSheetUiState,
                 onSubmitClick = {
-                    onSubmitClicked(it)
+                    onSubmitClicked(it, false)
                     scope.launch {
-                        currentSuduForBottomSheet = null
                         bottomsheetState.hide()
                     }
                 },
                 onCancelled = {
+                    onCancelClicked()
                     scope.launch {
-                        currentSuduForBottomSheet = null
                         bottomsheetState.hide()
                     }
                 },
                 onUpdateClicked = {
-                    onUpdateClicked(it)
+                    onSubmitClicked(it, true)
                     scope.launch {
-                        currentSuduForBottomSheet = null
                         bottomsheetState.hide()
                     }
                 }
@@ -82,6 +100,7 @@ fun StatelessMainScreen(
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = {
+                        onCancelClicked()
                         scope.launch {
                             bottomsheetState.show()
                         }
@@ -102,23 +121,29 @@ fun StatelessMainScreen(
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                mainUiState.sudus.let { sudus ->
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(8.dp)
-                    ) {
-                        items(sudus.size) { index ->
-                            SuduItem(
-                                sudu = sudus[index],
-                                onCheckedChange = { onCompletedUpdate(it) },
-                                onSuduClick = {
-                                    Log.d("TAG", "Sudu Id when just clicked on lazyItem: ${it.id}")
-                                    currentSuduForBottomSheet = it
-                                    scope.launch {
-                                        bottomsheetState.show()
+                if (mainUiState.loading) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) { CircularProgressIndicator() }
+                } else {
+                    mainUiState.sudus.let { sudus ->
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(8.dp)
+                        ) {
+                            items(sudus.size) { index ->
+                                SuduItem(
+                                    sudu = sudus[index],
+                                    onCheckedChange = { onCompletedUpdate(it) },
+                                    onSuduClick = {
+                                        onSuduClick(it.id)
+                                        scope.launch {
+                                            bottomsheetState.show()
+                                        }
                                     }
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 }
