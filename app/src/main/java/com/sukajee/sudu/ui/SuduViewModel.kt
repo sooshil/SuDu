@@ -13,6 +13,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -31,7 +32,7 @@ class SuduViewModel @Inject constructor(
     val bottomSheetUiState = _bottomSheetUiState.asStateFlow()
 
     init {
-        fetchSudus(suduOrder = SuduOrder.CreatedDate(OrderType.Descending))
+        fetchSudus(suduOrder = SuduOrder.CreatedDate(OrderType.Ascending))
     }
 
     fun insertSudu(sudu: Sudu) = viewModelScope.launch {
@@ -39,7 +40,7 @@ class SuduViewModel @Inject constructor(
         updateBottomSheetUiState(null)
     }
 
-    private fun fetchSudus(
+    fun fetchSudus(
         suduOrder: SuduOrder
     ) = viewModelScope.launch {
 
@@ -48,7 +49,7 @@ class SuduViewModel @Inject constructor(
                 loading = true
             )
         }
-        repository.getAllSudus().collect { sudus ->
+        repository.getAllSudus().collectLatest { sudus ->
             val sortedSudu = when (suduOrder.orderType) {
                 is OrderType.Ascending -> {
                     when (suduOrder) {

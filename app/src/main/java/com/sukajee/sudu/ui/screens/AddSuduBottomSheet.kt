@@ -36,9 +36,9 @@ fun AddSuduBottomSheet(
     LaunchedEffect(uiState.currentSudu) {
         suduId = uiState.currentSudu?.id ?: 0
         titleState = uiState.currentSudu?.title ?: ""
-        descriptionState = uiState.currentSudu?.description.toString()
+        descriptionState = uiState.currentSudu?.description ?: ""
         completedState = uiState.currentSudu?.isCompleted == true
-        deadlineState = uiState.currentSudu?.deadline.toString()
+        deadlineState = uiState.currentSudu?.let { it.deadline.toString() } ?: ""
     }
 
     Box(modifier = modifier.padding(16.dp)) {
